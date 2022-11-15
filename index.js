@@ -1,5 +1,9 @@
-const express = require("express");
-const { routes } = require("./routes");
+import express from "express";
+import dotenv from "dotenv";
+
+import { routes } from "./routes";
+
+dotenv.config();
 
 const app = express();
 
@@ -9,6 +13,6 @@ app.use(express.json());
 
 routes(app);
 
-app.listen(8082, async () => {
-  console.log(`Server running on port 8082`);
+app.listen(process.env.PORT, async () => {
+  console.log(`Server running on port ${process.env.PORT}`);
 });
