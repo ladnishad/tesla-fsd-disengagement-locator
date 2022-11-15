@@ -10,14 +10,15 @@ const routes = app => {
 
   app.route("/record").post(RecordDisengagement);
 
+  app.route("/disengagements").get(ShowDisengagements);
   app.route("/disengagements").post(ShowDisengagements);
 
   app.get("*", async (req, res) => {
-    res.redirect("/welcome");
+    res.redirect("/disengagements");
   });
 
   app.post("*", async (req, res) => {
-    res.redirect("/welcome");
+    res.redirect("/disengagements");
   });
 };
 

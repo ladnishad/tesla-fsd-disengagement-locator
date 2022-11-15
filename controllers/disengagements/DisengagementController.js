@@ -1,3 +1,4 @@
+import path from "path";
 import {
   get as DisengagementGetters,
   set as DisengagementSetters
@@ -36,19 +37,22 @@ export const ShowDisengagements = async (req, res) => {
   const { filters } = req.body;
 
   console.log("Request received to view disengagements");
-  const filterInFilters = Object.keys(filters);
 
-  if (filterInFilters.length) {
-    console.log("Filters are included");
-  } else {
-    console.log("No filters included");
+  if (filters) {
+    const filterInFilters = Object.keys(filters);
+
+    if (filterInFilters.length) {
+      console.log("Filters are included");
+    } else {
+      console.log("No filters included");
+    }
   }
 
   try {
     const disengagementsToShow = await DisengagementGetters.disengagements(
-      filters
+      filters || {}
     );
-    res.status(200).send(disengagementsToShow);
+    res.status(200).sendFile(path.join(__dirname + "../../../view/index.html"));
   } catch (e) {
     console.log(e);
     res.status(500).json({ message: e.message });

@@ -1,0 +1,55 @@
+{
+  "type": "DisengagementCollection",
+  "disengagements": [
+    {
+      "type": "Disengagement",
+      "properties": {
+        "dbh": 12
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-96.8029594, 32.7929756]
+      }
+    },
+    {
+      "type": "Disengagement",
+      "properties": {
+        "dbh": 2
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-79.91746, 40.44356]
+      }
+    },
+    {
+      "type": "Disengagement",
+      "properties": {
+        "dbh": 8
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-79.94606, 40.44961]
+      }
+    },
+    {
+      "type": "Disengagement",
+      "properties": {
+        "dbh": 12
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-79.92685, 40.46331]
+      }
+    },
+    {
+      "type": "Disengagement",
+      "properties": {
+        "dbh": 6
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-79.95063, 40.42189]
+      }
+    }
+  ]
+}

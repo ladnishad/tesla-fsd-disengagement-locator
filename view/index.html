@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>FSD Disengagements</title>
+    <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.js"></script>
+    <link
+      href="https://api.tiles.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      #map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script>
+      mapboxgl.accessToken = `${HtmlWebpackPlugin.options.mapboxKey}`;
+      const map = new mapboxgl.Map({
+        container: "map",
+        style: "mapbox://styles/mapbox/dark-v10",
+        center: [-96.8029594, 32.7929756],
+        zoom: 11
+      });
+
+      // we will add more code here in the next steps
+      map.on("load", () => {
+        map.addSource("disengagements", {
+          type: "geojson",
+          data: "../sampleData/disengagements.geojson"
+        });
+        // add heatmap layer here
+
+        map.addLayer(
+          {
+            id: "disengagement-heat",
+            type: "heatmap",
+            source: "disengagements",
+            maxzoom: 15,
+            paint: {
+              // increase weight as diameter breast height increases
+              "heatmap-weight": {
+                property: "dbh",
+                type: "exponential",
+                stops: [
+                  [1, 0],
+                  [62, 1]
+                ]
+              },
+              // increase intensity as zoom level increases
+              "heatmap-intensity": {
+                stops: [
+                  [11, 1],
+                  [15, 3]
+                ]
+              },
+              // assign color values be applied to points depending on their density
+              "heatmap-color": [
+                "interpolate",
+                ["linear"],
+                ["heatmap-density"],
+                0,
+                "rgba(236,222,239,0)",
+                0.2,
+                "rgb(208,209,230)",
+                0.4,
+                "rgb(166,189,219)",
+                0.6,
+                "rgb(103,169,207)",
+                0.8,
+                "rgb(28,144,153)"
+              ],
+              // increase radius as zoom increases
+              "heatmap-radius": {
+                stops: [
+                  [11, 15],
+                  [15, 20]
+                ]
+              },
+              // decrease opacity to transition into the circle layer
+              "heatmap-opacity": {
+                default: 1,
+                stops: [
+                  [14, 1],
+                  [15, 0]
+                ]
+              }
+            }
+          },
+          "waterway-label"
+        );
+
+        // add circle layer here
+        map.addLayer(
+          {
+            id: "disengagement-point",
+            type: "circle",
+            source: "disengagements",
+            minzoom: 14,
+            paint: {
+              // increase the radius of the circle as the zoom level and dbh value increases
+              "circle-radius": {
+                property: "dbh",
+                type: "exponential",
+                stops: [
+                  [{ zoom: 15, value: 1 }, 5],
+                  [{ zoom: 15, value: 62 }, 10],
+                  [{ zoom: 22, value: 1 }, 20],
+                  [{ zoom: 22, value: 62 }, 50]
+                ]
+              },
+              "circle-color": {
+                property: "dbh",
+                type: "exponential",
+                stops: [
+                  [0, "rgba(236,222,239,0)"],
+                  [10, "rgb(236,222,239)"],
+                  [20, "rgb(208,209,230)"],
+                  [30, "rgb(166,189,219)"],
+                  [40, "rgb(103,169,207)"],
+                  [50, "rgb(28,144,153)"],
+                  [60, "rgb(1,108,89)"]
+                ]
+              },
+              "circle-stroke-color": "white",
+              "circle-stroke-width": 1,
+              "circle-opacity": {
+                stops: [
+                  [14, 0],
+                  [15, 1]
+                ]
+              }
+            }
+          },
+          "waterway-label"
+        );
+
+        // map.on('click', 'disengagement-point', (event) => {
+        //   new mapboxgl.Popup()
+        //     .setLngLat(event.features[0].location.coordinates)
+        //     .setHTML(`<strong>DBH:</strong> ${event.features[0].properties.dbh}`)
+        //     .addTo(map);
+        // });
+      });
+    </script>
+  </body>
+</html>
