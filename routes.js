@@ -1,6 +1,7 @@
 import {
   RecordDisengagement,
-  ShowDisengagements
+  DisplayDisengagements,
+  GetDisengagements
 } from "./controllers/disengagements/DisengagementController";
 
 const routes = app => {
@@ -10,8 +11,8 @@ const routes = app => {
 
   app.route("/record").post(RecordDisengagement);
 
-  app.route("/disengagements").get(ShowDisengagements);
-  app.route("/disengagements").post(ShowDisengagements);
+  app.route("/disengagements").get(DisplayDisengagements);
+  app.route("/view-disengagements").get(GetDisengagements);
 
   app.get("*", async (req, res) => {
     res.redirect("/disengagements");

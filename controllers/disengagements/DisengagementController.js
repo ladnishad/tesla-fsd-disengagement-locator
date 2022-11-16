@@ -33,7 +33,16 @@ export const RecordDisengagement = async (req, res) => {
   }
 };
 
-export const ShowDisengagements = async (req, res) => {
+export const DisplayDisengagements = async (req, res) => {
+  try {
+    res.status(200).sendFile(path.join(__dirname + "../../../view/index.html"));
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({ message: e.message });
+  }
+};
+
+export const GetDisengagements = async (req, res) => {
   const { filters } = req.body;
 
   console.log("Request received to view disengagements");
@@ -52,7 +61,28 @@ export const ShowDisengagements = async (req, res) => {
     const disengagementsToShow = await DisengagementGetters.disengagements(
       filters || {}
     );
-    res.status(200).sendFile(path.join(__dirname + "../../../view/index.html"));
+
+    const disengagementsGeoJSON = {
+      type: "FeatureCollection",
+      features: []
+    };
+
+    disengagementsToShow.forEach(disengagement => {
+      const { _id, carModel, location } = disengagement;
+
+      const disengagementToAdd = {
+        type: "Feature",
+        properties: {
+          _id: _id,
+          carModel: carModel
+        },
+        geometry: location
+      };
+
+      disengagementsGeoJSON.features.push(disengagementToAdd);
+    });
+
+    res.status(200).send(disengagementsGeoJSON);
   } catch (e) {
     console.log(e);
     res.status(500).json({ message: e.message });
