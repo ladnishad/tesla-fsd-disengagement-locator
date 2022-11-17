@@ -1,4 +1,5 @@
 import path from "path";
+import { startCase } from "lodash";
 import {
   get as DisengagementGetters,
   set as DisengagementSetters
@@ -68,13 +69,14 @@ export const GetDisengagements = async (req, res) => {
     };
 
     disengagementsToShow.forEach(disengagement => {
-      const { _id, carModel, location } = disengagement;
+      const { _id, car, carModel, location } = disengagement;
 
       const disengagementToAdd = {
         type: "Feature",
         properties: {
-          _id: _id,
-          carModel: carModel
+          _id,
+          carModel: startCase(car.modelName),
+          carModelId: carModel
         },
         geometry: location
       };

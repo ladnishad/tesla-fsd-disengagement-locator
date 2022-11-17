@@ -168,7 +168,9 @@
         map.on("click", "disengagement-point", event => {
           new mapboxgl.Popup()
             .setLngLat(event.features[0].geometry.coordinates)
-            .setHTML(`<strong>ID:</strong> ${event.features[0].properties._id}`)
+            .setHTML(
+              `<strong>Car Model:</strong> ${event.features[0].properties.carModel}`
+            )
             .addTo(map);
         });
       });
