@@ -73,15 +73,17 @@
                 ["linear"],
                 ["heatmap-density"],
                 0,
-                "rgba(236,222,239,0)",
+                "rgba(33,102,172,0)",
                 0.2,
-                "rgb(208,209,230)",
-                0.4,
-                "rgb(166,189,219)",
-                0.6,
                 "rgb(103,169,207)",
+                0.4,
+                "rgb(209,229,240)",
+                0.6,
+                "rgb(253,219,199)",
                 0.8,
-                "rgb(28,144,153)"
+                "rgb(239,138,98)",
+                1,
+                "rgb(178,24,43)"
               ],
               // increase radius as zoom increases
               "heatmap-radius": {
@@ -135,25 +137,40 @@
               //     [60, "rgb(1,108,89)"]
               //   ]
               // },
-              "circle-stroke-color": "white",
+              // "circle-stroke-color": "white",
               "circle-stroke-width": 1,
-              "circle-opacity": {
-                stops: [
-                  [14, 0],
-                  [15, 1]
-                ]
-              }
+              "circle-opacity": [
+                "interpolate",
+                ["linear"],
+                ["zoom"],
+                7,
+                0,
+                8,
+                1
+              ]
             }
           },
           "waterway-label"
         );
 
-        // map.on('click', 'disengagement-point', (event) => {
-        //   new mapboxgl.Popup()
-        //     .setLngLat(event.features[0].location.coordinates)
-        //     .setHTML(`<strong>DBH:</strong> ${event.features[0].properties.dbh}`)
-        //     .addTo(map);
-        // });
+        map.addControl(
+          new mapboxgl.GeolocateControl({
+            positionOptions: {
+              enableHighAccuracy: true
+            },
+            // When active the map will receive updates to the device's location as it changes.
+            // trackUserLocation: true,
+            // Draw an arrow next to the location dot to indicate which direction the device is heading.
+            showUserHeading: true
+          })
+        );
+
+        map.on("click", "disengagement-point", event => {
+          new mapboxgl.Popup()
+            .setLngLat(event.features[0].geometry.coordinates)
+            .setHTML(`<strong>ID:</strong> ${event.features[0].properties._id}`)
+            .addTo(map);
+        });
       });
     </script>
   </body>
