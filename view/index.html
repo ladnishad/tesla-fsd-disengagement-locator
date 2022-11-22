@@ -10,6 +10,18 @@
       href="https://api.tiles.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.css"
       rel="stylesheet"
     />
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.0.9/mapbox-gl-draw.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.0.9/mapbox-gl-draw.css"
+      type="text/css"
+    />
+    <script src="https://npmcdn.com/@turf/turf/turf.min.js"></script>
+    <script src=https://cdnjs.cloudflare.com/ajax/libs/mapbox-polyline/1.1.1/polyline.js></script>
+
+    <script src=https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v4.0.2/mapbox-gl-directions.js></script>
+    <link rel="stylesheet" href=https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v4.0.2/mapbox-gl-directions.css type="text/css" />
+
     <style>
       body {
         margin: 0;
@@ -22,28 +34,128 @@
         bottom: 0;
         width: 100%;
       }
+
+      .info-box {
+        position: absolute;
+        margin-left: auto; 
+        margin-right: 0;
+        width: 25%;
+        top: 0;
+        bottom: 20px;
+        padding: 20px;
+        background-color: #fff;
+        overflow-y: scroll;
+      }
+
+      .sidebar {
+        position: absolute;
+        margin: 20px 20px 30px 20px;
+        width: 25%;
+        top: 0;
+        bottom: 0;
+        padding: 20px;
+        background-color: #fff;
+        overflow-y: scroll;
+      }
     </style>
   </head>
   <body>
     <div id="map"></div>
+    <div class="sidebar">
+      <h1>Reports</h1>
+      <div id="reports"></div>
+    </div>
+
+    <!-- Placeholder for directions for multiple nav points don't need for now -->
+    <!-- <div class="info-box">
+      <p>
+        Draw your route using the draw tools on the right. To get the most
+        accurate route match, draw points at regular intervals.
+      </p>
+      <div id="directions"></div>
+    </div> -->
     <script>
       mapboxgl.accessToken =
         "pk.eyJ1IjoibGFkbmlzaGFkIiwiYSI6ImNsYWluZGh2czA0Z2szc3FqNnpzdHVjb24ifQ.zaJVETSXIzbg-Msz5gM_Rg";
+
       const map = new mapboxgl.Map({
         container: "map",
         style: "mapbox://styles/mapbox/dark-v10",
         center: [-96.8029594, 32.7929756],
-        zoom: 11
+        zoom: 11,
       });
 
+      const directions = new MapboxDirections({
+          accessToken: mapboxgl.accessToken,
+          unit: 'metric',
+          profile: 'mapbox/driving',
+          alternatives: false,
+          geometries: 'geojson',
+          controls: { instructions: false },
+          flyTo: false
+        });
+
+      map.addControl(directions, 'top-right');
+      map.scrollZoom.enable();
+      
       // we will add more code here in the next steps
       map.on("load", () => {
         map.addSource("disengagements", {
           type: "geojson",
-          data: "https://www.isfsdbetaready.com/view-disengagements"
+          data: "https://isfsdbetaready.com/view-disengagements",
+        });
+
+        map.addSource('theRoute', {
+          type: 'geojson',
+          data: {
+            type: 'Feature'
+          }
+        });
+          
+        map.addLayer({
+          id: 'theRoute',
+          type: 'line',
+          source: 'theRoute',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': '#cccccc',
+            'line-opacity': 0.5,
+            'line-width': 13,
+            'line-blur': 0.5
+          }
+        });
+
+        directions.on('clear', () => {
+          map.setLayoutProperty('theRoute', 'visibility', 'none');
+        });
+
+        directions.on('route', (e) => {
+          map.setLayoutProperty('theRoute', 'visibility', 'none');
+
+          if(e.route){
+            const { route } = e
+          
+            route.forEach((eachRoute) => {
+              map.setLayoutProperty('theRoute', 'visibility', 'visible');
+
+              // Get GeoJSON LineString feature of route
+              const routeLine = polyline.toGeoJSON(route.geometry);
+
+              // Create a bounding box around this route
+              // The app will find a random point in the new bbox
+              bbox = turf.bbox(routeLine);
+              polygon = turf.bboxPolygon(bbox);
+              
+              // Update the data for the route
+              // This will update the route line on the map
+              map.getSource('theRoute').setData(routeLine);
+            })
+          }
         });
         // add heatmap layer here
-
         map.addLayer(
           {
             id: "disengagement-heat",
@@ -64,8 +176,8 @@
               "heatmap-intensity": {
                 stops: [
                   [11, 1],
-                  [15, 3]
-                ]
+                  [15, 3],
+                ],
               },
               // assign color values be applied to points depending on their density
               "heatmap-color": [
@@ -83,24 +195,24 @@
                 0.8,
                 "rgb(239,138,98)",
                 1,
-                "rgb(178,24,43)"
+                "rgb(178,24,43)",
               ],
               // increase radius as zoom increases
               "heatmap-radius": {
                 stops: [
                   [11, 15],
-                  [15, 20]
-                ]
+                  [15, 20],
+                ],
               },
               // decrease opacity to transition into the circle layer
               "heatmap-opacity": {
                 default: 1,
                 stops: [
                   [14, 1],
-                  [15, 0]
-                ]
-              }
-            }
+                  [15, 0],
+                ],
+              },
+            },
           },
           "waterway-label"
         );
@@ -146,9 +258,9 @@
                 7,
                 0,
                 8,
-                1
-              ]
-            }
+                1,
+              ],
+            },
           },
           "waterway-label"
         );
@@ -156,16 +268,16 @@
         map.addControl(
           new mapboxgl.GeolocateControl({
             positionOptions: {
-              enableHighAccuracy: true
+              enableHighAccuracy: true,
             },
             // When active the map will receive updates to the device's location as it changes.
             // trackUserLocation: true,
             // Draw an arrow next to the location dot to indicate which direction the device is heading.
-            showUserHeading: true
+            showUserHeading: true,
           })
         );
 
-        map.on("click", "disengagement-point", event => {
+        map.on("click", "disengagement-point", (event) => {
           new mapboxgl.Popup()
             .setLngLat(event.features[0].geometry.coordinates)
             .setHTML(
