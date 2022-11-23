@@ -2,7 +2,7 @@ import path from "path";
 import { startCase } from "lodash";
 import {
   get as DisengagementGetters,
-  set as DisengagementSetters
+  set as DisengagementSetters,
 } from "./helpers";
 import { isValidLatLong } from "../../helpers";
 
@@ -17,11 +17,8 @@ export const RecordDisengagement = async (req, res) => {
       return res;
     }
 
-    const recordedDisengagementResponse = await DisengagementSetters.disengagement(
-      model,
-      lat,
-      long
-    );
+    const recordedDisengagementResponse =
+      await DisengagementSetters.disengagement(model, lat, long);
 
     if (recordedDisengagementResponse.type === "success") {
       res.status(201).send(recordedDisengagementResponse.result);
@@ -65,10 +62,10 @@ export const GetDisengagements = async (req, res) => {
 
     const disengagementsGeoJSON = {
       type: "FeatureCollection",
-      features: []
+      features: [],
     };
 
-    disengagementsToShow.forEach(disengagement => {
+    disengagementsToShow.forEach((disengagement) => {
       const { _id, car, carModel, location } = disengagement;
 
       const disengagementToAdd = {
@@ -76,9 +73,9 @@ export const GetDisengagements = async (req, res) => {
         properties: {
           _id,
           carModel: startCase(car.modelName),
-          carModelId: carModel
+          carModelId: carModel,
         },
-        geometry: location
+        geometry: location,
       };
 
       disengagementsGeoJSON.features.push(disengagementToAdd);
