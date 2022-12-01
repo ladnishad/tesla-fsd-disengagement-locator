@@ -1,10 +1,10 @@
 import {
   RecordDisengagement,
   DisplayDisengagements,
-  GetDisengagements
+  GetDisengagements,
 } from "./controllers/disengagements/DisengagementController";
 
-const routes = app => {
+const routes = (app) => {
   app.get("/welcome", async (req, res) => {
     res.send("Welcome. Send your data to the api at the /record endpoint");
   });

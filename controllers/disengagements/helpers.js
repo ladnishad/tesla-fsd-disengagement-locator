@@ -1,9 +1,12 @@
 import { Disengagement } from "../../models/Disengagement";
+import { DisengagementAggregations } from "../../aggregations/disengagementsAggregations";
 import { get as CarGetters } from "../cars/helpers";
 
 export const get = {
-  disengagements: async (filters = {}) => {
-    const disengagementsFetched = await Disengagement.find(filters).exec();
+  disengagements: async filters => {
+    const disengagementsFetched = await DisengagementAggregations[
+      "disengagements.getAllDisengagementsDetails"
+    ]();
     return disengagementsFetched;
   }
 };

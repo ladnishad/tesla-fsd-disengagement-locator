@@ -1,160 +1,451 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>FSD Disengagements</title>
-    <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.js"></script>
-    <link
-      href="https://api.tiles.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.css"
-      rel="stylesheet"
-    />
-    <style>
-      body {
-        margin: 0;
-        padding: 0;
-      }
 
-      #map {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        width: 100%;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="map"></div>
-    <script>
-      mapboxgl.accessToken =
-        "pk.eyJ1IjoibGFkbmlzaGFkIiwiYSI6ImNsYWluZGh2czA0Z2szc3FqNnpzdHVjb24ifQ.zaJVETSXIzbg-Msz5gM_Rg";
-      const map = new mapboxgl.Map({
-        container: "map",
-        style: "mapbox://styles/mapbox/dark-v10",
-        center: [-96.8029594, 32.7929756],
-        zoom: 11
-      });
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>FSD Disengagements</title>
+  <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.js"></script>
+  <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.css" rel="stylesheet" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.0.9/mapbox-gl-draw.js"></script>
+  <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.0.9/mapbox-gl-draw.css"
+    type="text/css" />
+  <script src="https://npmcdn.com/@turf/turf/turf.min.js"></script>
+  <script src=https://cdnjs.cloudflare.com/ajax/libs/mapbox-polyline/1.1.1/polyline.js></script>
 
-      // we will add more code here in the next steps
-      map.on("load", () => {
-        map.addSource("disengagements", {
-          type: "geojson",
-          data: "https://isfsdbetaready.com/view-disengagements"
+  <script src=https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v4.0.2/mapbox-gl-directions.js></script>
+  <link rel="stylesheet"
+    href=https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v4.0.2/mapbox-gl-directions.css
+    type="text/css" />
+
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+  <style>
+    body {
+      color: #404040;
+      font: 400 15px/22px 'Source Sans Pro', 'Helvetica Neue', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    #map {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 100%;
+    }
+
+    .sidebar {
+      position: absolute;
+      margin: 20px;
+      width: 25%;
+      top: 0;
+      bottom: 20%;
+      padding: 20px;
+      background-color: #fff;
+      overflow-y: scroll;
+      font-family: sans-serif;
+    }
+
+    h1 {
+      font-size: 22px;
+      margin: 0;
+      font-weight: 400;
+    }
+
+    a {
+      color: #404040;
+      text-decoration: none;
+    }
+
+    a:hover {
+      color: #101010;
+    }
+
+    .heading {
+      background: #fff;
+      border-bottom: 1px solid #eee;
+      min-height: 60px;
+      line-height: 60px;
+      padding: 0 10px;
+    }
+
+    .reports {
+      height: 100%;
+      overflow: auto;
+      padding-bottom: 60px;
+    }
+
+    .reports .item {
+      display: block;
+      border-bottom: 1px solid #eee;
+      padding: 10px;
+      text-decoration: none;
+    }
+
+    .reports .item:last-child {
+      border-bottom: none;
+    }
+
+    .reports .item .title {
+      display: block;
+      color: #00853e;
+      font-weight: 700;
+    }
+
+    .reports .item .warning {
+      display: block;
+      color: red;
+      font-weight: 700;
+    }
+
+    .reports .item .title small {
+      font-weight: 400;
+    }
+
+    .reports .item.active .title,
+    .reports .item .title:hover {
+      color: #8cc63f;
+    }
+
+    .reports .item.active {
+      background-color: #f8f8f8;
+    }
+
+    ::-webkit-scrollbar {
+      width: 3px;
+      height: 3px;
+      border-left: 0;
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    ::-webkit-scrollbar-track {
+      background: none;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #00853e;
+      border-radius: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+  <div class="sidebar">
+    <div class="heading">
+      <h1>Routes</h1>
+    </div>
+
+    <div id="reports" class="reports"></div>
+  </div>
+
+  <!-- Placeholder for directions for multiple nav points don't need for now -->
+  <!-- <div class="info-box">
+      <p>
+        Draw your route using the draw tools on the right. To get the most
+        accurate route match, draw points at regular intervals.
+      </p>
+      <div id="directions"></div>
+    </div> -->
+  <script>
+    mapboxgl.accessToken =
+      "pk.eyJ1IjoibGFkbmlzaGFkIiwiYSI6ImNsYWluZGh2czA0Z2szc3FqNnpzdHVjb24ifQ.zaJVETSXIzbg-Msz5gM_Rg";
+
+    const map = new mapboxgl.Map({
+      container: "map",
+      style: "mapbox://styles/mapbox/dark-v10",
+      center: [-101.2996, 47.1164],
+      zoom: 3,
+    });
+    
+    async function getDisengagements() {
+      try {
+        const response = await axios.get("http://localhost:8082/view-disengagements")
+
+        const { data } = response
+
+        const geoJsonObj = {
+          type: "FeatureCollection",
+          features: [],
+        };
+
+        data.forEach(({ _id, car, carModel, location }) => {
+          const featureToAdd = {
+            type: "Feature",
+            properties: {
+              _id,
+              carModel: _.startCase(car.modelName),
+              carModelId: carModel
+            },
+            geometry: location,
+          };
+
+          geoJsonObj.features.push(featureToAdd);
         });
-        // add heatmap layer here
 
-        map.addLayer(
-          {
-            id: "disengagement-heat",
-            type: "heatmap",
-            source: "disengagements",
-            maxzoom: 15,
-            paint: {
-              // increase weight as diameter breast height increases
-              // "heatmap-weight": {
-              //   property: "dbh",
-              //   type: "exponential",
-              //   stops: [
-              //     [1, 0],
-              //     [62, 1]
-              //   ]
-              // },
-              // increase intensity as zoom level increases
-              "heatmap-intensity": {
-                stops: [
-                  [11, 1],
-                  [15, 3]
-                ]
-              },
-              // assign color values be applied to points depending on their density
-              "heatmap-color": [
-                "interpolate",
-                ["linear"],
-                ["heatmap-density"],
-                0,
-                "rgba(236,222,239,0)",
-                0.2,
-                "rgb(208,209,230)",
-                0.4,
-                "rgb(166,189,219)",
-                0.6,
-                "rgb(103,169,207)",
-                0.8,
-                "rgb(28,144,153)"
-              ],
-              // increase radius as zoom increases
-              "heatmap-radius": {
-                stops: [
-                  [11, 15],
-                  [15, 20]
-                ]
-              },
-              // decrease opacity to transition into the circle layer
-              "heatmap-opacity": {
-                default: 1,
-                stops: [
-                  [14, 1],
-                  [15, 0]
-                ]
-              }
-            }
-          },
-          "waterway-label"
-        );
+        return geoJsonObj
+      } catch (e) {
+        throw new Error(e);
+      }
+    }
 
-        // add circle layer here
-        map.addLayer(
-          {
-            id: "disengagement-point",
-            type: "circle",
-            source: "disengagements",
-            minzoom: 14,
-            paint: {
-              // increase the radius of the circle as the zoom level and dbh value increases
-              // "circle-radius": {
-              //   property: "dbh",
-              //   type: "exponential",
-              //   stops: [
-              //     [{ zoom: 15, value: 1 }, 5],
-              //     [{ zoom: 15, value: 62 }, 10],
-              //     [{ zoom: 22, value: 1 }, 20],
-              //     [{ zoom: 22, value: 62 }, 50]
-              //   ]
-              // },
-              // "circle-color": {
-              //   property: "dbh",
-              //   type: "exponential",
-              //   stops: [
-              //     [0, "rgba(236,222,239,0)"],
-              //     [10, "rgb(236,222,239)"],
-              //     [20, "rgb(208,209,230)"],
-              //     [30, "rgb(166,189,219)"],
-              //     [40, "rgb(103,169,207)"],
-              //     [50, "rgb(28,144,153)"],
-              //     [60, "rgb(1,108,89)"]
-              //   ]
-              // },
-              "circle-stroke-color": "white",
-              "circle-stroke-width": 1,
-              "circle-opacity": {
-                stops: [
-                  [14, 0],
-                  [15, 1]
-                ]
-              }
-            }
-          },
-          "waterway-label"
-        );
+    map.on("load", async () => {
+      const disengagements = await getDisengagements()
 
-        // map.on('click', 'disengagement-point', (event) => {
-        //   new mapboxgl.Popup()
-        //     .setLngLat(event.features[0].location.coordinates)
-        //     .setHTML(`<strong>DBH:</strong> ${event.features[0].properties.dbh}`)
-        //     .addTo(map);
-        // });
+      const directions = new MapboxDirections({
+        accessToken: mapboxgl.accessToken,
+        unit: 'metric',
+        profile: 'mapbox/driving',
+        alternatives: 'false',
+        geometries: 'geojson',
+        geocoder: {
+          proximity: [-96.808891, 32.779167] //Change this line to a longitude/latitude coordinate that the Geocoder will try to find results near.
+        }, 
+        flyTo: false
       });
-    </script>
-  </body>
+
+      map.addControl(directions, 'top-right');
+      map.scrollZoom.enable();
+
+      map.addSource("disengagements", {
+        type: "geojson",
+        data: disengagements,
+      });
+
+      let obstacle = turf.buffer(disengagements, 0.05, { units: 'kilometers' });
+
+      // Create sources and layers for the returned routes.
+      // There will be a maximum of 3 results from the Directions API.
+      // We use a loop to create the sources and layers.
+      for (let i = 0; i < 3; i++) {
+        map.addSource(`route${i}`, {
+          type: 'geojson',
+          data: {
+            type: 'Feature'
+          }
+        });
+
+        map.addLayer({
+          id: `route${i}`,
+          type: 'line',
+          source: `route${i}`,
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': '#cccccc',
+            'line-opacity': 0.5,
+            'line-width': 13,
+            'line-blur': 0.5
+          }
+        });
+      }
+
+      directions.on('route', (event) => {
+        const reports = document.getElementById('reports');
+        reports.innerHTML = '';
+        const report = reports.appendChild(document.createElement('div'));
+        // Add IDs to the routes
+        const routes = event.route.map((route, index) => ({
+          ...route,
+          id: index
+        }));
+
+        // Hide all routes by setting the opacity to zero.
+        for (let i = 0; i < 3; i++) {
+          map.setLayoutProperty(`route${i}`, 'visibility', 'none');
+        }
+
+        for (const route of routes) {
+          // Make each route visible, by setting the opacity to 50%.
+          map.setLayoutProperty(`route${route.id}`, 'visibility', 'visible');
+
+          // Get GeoJSON LineString feature of route
+          const routeLine = polyline.toGeoJSON(route.geometry);
+
+          // Update the data for the route, updating the visual.
+          map.getSource(`route${route.id}`).setData(routeLine);
+
+          // const ptsWithin = turf.pointsWithinPolygon(obstacle, routeLine)
+          const isClear = turf.booleanDisjoint(obstacle, routeLine) === true;
+
+          // console.log(`There are ${ptsWithin.features.length} points and is ${isClear ? "clear": "not clear"}`);
+
+          const collision = isClear ? 'has no reported disengagements' : 'has some reported disengagements';
+          const emoji = isClear ? '✔️' : '⚠️';
+          const detail = isClear ? 'does not go' : 'goes';
+          report.className = isClear ? 'item' : 'item warning';
+
+          if (isClear) {
+            map.setPaintProperty(`route${route.id}`, 'line-color', '#74c476');
+          } else {
+            map.setPaintProperty(`route${route.id}`, 'line-color', '#de2d26');
+          }
+
+          // Add a new report section to the sidebar.
+          // Assign a unique `id` to the report.
+          report.id = `report-${route.id}`;
+
+          // Add the response to the individual report created above.
+          const heading = report.appendChild(document.createElement('h3'));
+
+          // Set the class type based on clear value.
+          heading.className = isClear ? 'title' : 'warning';
+          heading.innerHTML = `${emoji} Route ${route.id + 1} ${collision}`;
+
+          // Add details to the individual report.
+          const details = report.appendChild(document.createElement('div'));
+          details.innerHTML = `This route ${detail} through disengagements.`;
+          report.appendChild(document.createElement('hr'));
+        }
+      });
+      // add heatmap layer here
+      map.addLayer(
+        {
+          id: "disengagement-heat",
+          type: "heatmap",
+          source: "disengagements",
+          maxzoom: 15,
+          paint: {
+            // increase weight as diameter breast height increases
+            // "heatmap-weight": {
+            //   property: "dbh",
+            //   type: "exponential",
+            //   stops: [
+            //     [1, 0],
+            //     [62, 1]
+            //   ]
+            // },
+            // increase intensity as zoom level increases
+            "heatmap-intensity": {
+              stops: [
+                [11, 1],
+                [15, 3],
+              ],
+            },
+            // assign color values be applied to points depending on their density
+            "heatmap-color": [
+              "interpolate",
+              ["linear"],
+              ["heatmap-density"],
+              0,
+              "rgba(33,102,172,0)",
+              0.2,
+              "rgb(103,169,207)",
+              0.4,
+              "rgb(209,229,240)",
+              0.6,
+              "rgb(253,219,199)",
+              0.8,
+              "rgb(239,138,98)",
+              1,
+              "rgb(178,24,43)",
+            ],
+            // increase radius as zoom increases
+            "heatmap-radius": {
+              stops: [
+                [11, 15],
+                [15, 20],
+              ],
+            },
+            // decrease opacity to transition into the circle layer
+            "heatmap-opacity": {
+              default: 1,
+              stops: [
+                [14, 1],
+                [15, 0],
+              ],
+            },
+          },
+        },
+        "waterway-label"
+      );
+
+      // add circle layer here
+      map.addLayer(
+        {
+          id: "disengagement-point",
+          type: "circle",
+          source: "disengagements",
+          minzoom: 14,
+          paint: {
+            // increase the radius of the circle as the zoom level and dbh value increases
+            // "circle-radius": {
+            //   property: "dbh",
+            //   type: "exponential",
+            //   stops: [
+            //     [{ zoom: 15, value: 1 }, 5],
+            //     [{ zoom: 15, value: 62 }, 10],
+            //     [{ zoom: 22, value: 1 }, 20],
+            //     [{ zoom: 22, value: 62 }, 50]
+            //   ]
+            // },
+            // "circle-color": {
+            //   property: "dbh",
+            //   type: "exponential",
+            //   stops: [
+            //     [0, "rgba(236,222,239,0)"],
+            //     [10, "rgb(236,222,239)"],
+            //     [20, "rgb(208,209,230)"],
+            //     [30, "rgb(166,189,219)"],
+            //     [40, "rgb(103,169,207)"],
+            //     [50, "rgb(28,144,153)"],
+            //     [60, "rgb(1,108,89)"]
+            //   ]
+            // },
+            // "circle-stroke-color": "white",
+            "circle-stroke-width": 1,
+            "circle-opacity": [
+              "interpolate",
+              ["linear"],
+              ["zoom"],
+              7,
+              0,
+              8,
+              1,
+            ],
+          },
+        },
+        "waterway-label"
+      );
+      
+      const geoLocate = new mapboxgl.GeolocateControl({
+          positionOptions: {
+            enableHighAccuracy: true,
+          },
+          // When active the map will receive updates to the device's location as it changes.
+          // trackUserLocation: true,
+          // Draw an arrow next to the location dot to indicate which direction the device is heading.
+          showUserHeading: true,
+        })
+      map.addControl(geoLocate);
+      
+      geoLocate.on('geolocate', function(e) {
+        const { coords } = e
+        const { longitude, latitude } = coords
+        const position = [longitude, latitude]
+        
+        map.setCenter(position)
+        map.setZoom(11)
+      })
+
+      map.on("click", "disengagement-point", (event) => {
+        new mapboxgl.Popup()
+          .setLngLat(event.features[0].geometry.coordinates)
+          .setHTML(
+            `<strong>ID: ${event.features[0].properties._id} </strong><br><strong>Car Model:</strong> ${event.features[0].properties.carModel}`
+          )
+          .addTo(map);
+      });
+    });
+  </script>
+</body>
+
 </html>

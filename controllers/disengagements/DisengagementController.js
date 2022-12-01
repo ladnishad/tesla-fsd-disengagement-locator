@@ -1,7 +1,8 @@
 import path from "path";
+import { startCase } from "lodash";
 import {
   get as DisengagementGetters,
-  set as DisengagementSetters
+  set as DisengagementSetters,
 } from "./helpers";
 import { isValidLatLong } from "../../helpers";
 
@@ -16,11 +17,8 @@ export const RecordDisengagement = async (req, res) => {
       return res;
     }
 
-    const recordedDisengagementResponse = await DisengagementSetters.disengagement(
-      model,
-      lat,
-      long
-    );
+    const recordedDisengagementResponse =
+      await DisengagementSetters.disengagement(model, lat, long);
 
     if (recordedDisengagementResponse.type === "success") {
       res.status(201).send(recordedDisengagementResponse.result);
@@ -47,42 +45,33 @@ export const GetDisengagements = async (req, res) => {
 
   console.log("Request received to view disengagements");
 
-  if (filters) {
-    const filterInFilters = Object.keys(filters);
-
-    if (filterInFilters.length) {
-      console.log("Filters are included");
-    } else {
-      console.log("No filters included");
-    }
-  }
-
   try {
     const disengagementsToShow = await DisengagementGetters.disengagements(
       filters || {}
     );
 
-    const disengagementsGeoJSON = {
-      type: "FeatureCollection",
-      features: []
-    };
+    // const disengagementsGeoJSON = {
+    //   type: "FeatureCollection",
+    //   features: [],
+    // };
 
-    disengagementsToShow.forEach(disengagement => {
-      const { _id, carModel, location } = disengagement;
+    // disengagementsToShow.forEach((disengagement) => {
+    //   const { _id, car, carModel, location } = disengagement;
 
-      const disengagementToAdd = {
-        type: "Feature",
-        properties: {
-          _id: _id,
-          carModel: carModel
-        },
-        geometry: location
-      };
+    //   const disengagementToAdd = {
+    //     type: "Feature",
+    //     properties: {
+    //       _id,
+    //       carModel: startCase(car.modelName),
+    //       carModelId: carModel,
+    //     },
+    //     geometry: location,
+    //   };
 
-      disengagementsGeoJSON.features.push(disengagementToAdd);
-    });
+    //   disengagementsGeoJSON.features.push(disengagementToAdd);
+    // });
 
-    res.status(200).send(disengagementsGeoJSON);
+    res.status(200).send(disengagementsToShow);
   } catch (e) {
     console.log(e);
     res.status(500).json({ message: e.message });
