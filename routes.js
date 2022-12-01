@@ -4,14 +4,10 @@ import {
   GetDisengagements,
 } from "./controllers/disengagements/DisengagementController";
 
-import { getAuthPage } from "./controllers/auth/authControllers";
-
 const routes = (app) => {
   app.get("/welcome", async (req, res) => {
     res.send("Welcome. Send your data to the api at the /record endpoint");
   });
-
-  app.route("/login").get(getAuthPage);
 
   app.route("/record").post(RecordDisengagement);
 
