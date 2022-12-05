@@ -8,14 +8,27 @@ export const DisengagementAggregations = {
           from: "carmodels",
           localField: "carModel",
           foreignField: "_id",
-          as: "car"
-        }
+          as: "car",
+        },
+      },
+      {
+        $lookup: {
+          from: "versionmodels",
+          localField: "version",
+          foreignField: "_id",
+          as: "version",
+        },
       },
       {
         $unwind: {
-          path: "$car"
-        }
-      }
+          path: "$car",
+        },
+      },
+      {
+        $unwind: {
+          path: "$version",
+        },
+      },
     ];
 
     try {
@@ -24,5 +37,5 @@ export const DisengagementAggregations = {
     } catch (e) {
       return e;
     }
-  }
+  },
 };

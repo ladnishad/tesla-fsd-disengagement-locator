@@ -1,13 +1,14 @@
 import path from "path";
 import { startCase } from "lodash";
+import { VersionModel } from "../../models/VersionModel"
 import {
   get as DisengagementGetters,
   set as DisengagementSetters,
 } from "./helpers";
-import { isValidLatLong } from "../../helpers";
+import { isValidLatLong, typeOfVersionInput } from "../../helpers";
 
 export const RecordDisengagement = async (req, res) => {
-  const { model, lat, long } = req.body;
+  const { model, lat, long, version } = req.body;
 
   console.log("Request received to record disengagement");
 
@@ -17,13 +18,36 @@ export const RecordDisengagement = async (req, res) => {
       return res;
     }
 
-    const recordedDisengagementResponse =
-      await DisengagementSetters.disengagement(model, lat, long);
+    else {
+      const versionInputType = await typeOfVersionInput(version)
 
-    if (recordedDisengagementResponse.type === "success") {
-      res.status(201).send(recordedDisengagementResponse.result);
-    } else {
-      res.status(500).send({ message: recordedDisengagementResponse.result });
+      if(versionInputType === null){
+        res.status(409).json({ message: "Invalid version input" });
+        return res;
+      }
+
+      let versionOnDb;
+
+      if(versionInputType === 1){
+        versionOnDb = await VersionModel.findOne({ fsdVersionNumber: version }).exec()
+
+        if(!versionOnDb){
+          versionOnDb = await VersionModel.findOne({ softwareVersionNumber: version }).exec()
+        }
+      }
+
+      if(versionInputType === 0) {
+        versionOnDb = await VersionModel.findOne({ _id: version }).exec()
+      }
+
+      const recordedDisengagementResponse =
+        await DisengagementSetters.disengagement(model, lat, long, versionOnDb);
+
+      if (recordedDisengagementResponse.type === "success") {
+        res.status(201).send(recordedDisengagementResponse.result);
+      } else {
+        res.status(500).send({ message: recordedDisengagementResponse.result });
+      }
     }
   } catch (e) {
     console.log(e);

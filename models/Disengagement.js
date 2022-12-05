@@ -21,6 +21,14 @@ const DisengagementSchema = new Schema({
     type: String,
     required: true
   },
+  version: {
+    type: String,
+    required: true
+  },
+  timestamp:{
+    type: Number,
+    required: true
+  },
   location: {
     type: LocationPointSchema,
     index: "2dsphere"
