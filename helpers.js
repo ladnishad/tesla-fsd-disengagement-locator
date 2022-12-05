@@ -9,6 +9,21 @@ export const isValidLatLong = (lat, long) => {
   return false;
 };
 
+export const typeOfVersionInput = (version) => {
+  const versionRegex = /^[0-9]+(\.[0-9]+)*(\.[0-9]+){0,}$/
+  const mongoIdRegex = /^[a-fA-F0-9]{24}$/
+
+  if(versionRegex.test(version)){
+    return 1
+  }
+  if(mongoIdRegex.test(version)){
+    return 0
+  }
+  else {
+    return null
+  }
+}
+
 export const dataToGeoJson = (data, propertyFields = [], geometryFieldName) => {
   const geoJsonObj = {
     type: "FeatureCollection",
